@@ -2,7 +2,25 @@
 
 const express = require('express');
 const app = express();
+// const cors = require('cors');
+const bodyParser = require('body-parser');
+
+// allow both form-encoded and json body parsing
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// allow connections to all routes from any browser
+// app.use(cors());
+
+/** routes */
+
+// const authRoutes = require('./routes/auth');
+// const userRoutes = require('./routes/users');
+const companyRoutes = require('./routes/companies');
+
+// app.use('/auth', authRoutes);
+// app.use('/users', userRoutes);
+app.use('/companies', companyRoutes);
 
 // add logging system
 

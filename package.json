@@ -2,7 +2,7 @@
   "name": "express-jobly",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
     "test": "jest -i",
     "start": "node server.js"
