@@ -8,12 +8,11 @@ class Company {
   static async getCompanies(queryString) {
     let results;
 
-    if (queryString === undefined) {
+    if (Object.keys(queryString).length === 0) {
       // Returns handles and names for all companies
       results = await db.query(`SELECT handle, name FROM companies`);
     }
     if (queryString.search) {
-      console.log('why are we in search again whyyyy');
       // Returns handles and names for companies where search string matches handle or name
       results = await db.query(
         `SELECT handle, name FROM companies WHERE handle LIKE $1 or name LIKE $1`,
@@ -21,7 +20,6 @@ class Company {
       );
     }
     if (queryString.min_employees) {
-      console.log('we made it into min employees');
       /** Returns companies with a minimum employee count > queryString */
       results = await db.query(
         `SELECT name, handle FROM companies WHERE num_employees > $1`,
@@ -47,10 +45,11 @@ class Company {
       }
 
       // This will catch errors if there are no results
-      if (!results.rows[0]) {
+      if (results.rows.length === 0) {
         throw new Error(`No company found through ${queryString}.`);
       }
     }
+
     return results.rows;
     // End of company class
   }
