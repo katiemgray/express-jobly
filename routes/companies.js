@@ -9,9 +9,8 @@ const db = require('../db');
 // Handles should be displayed based on the search term and if the name includes it.
 router.get('/', async function(req, res, next) {
   try {
-    let companies = await Company.getCompanies();
-    console.log(`inside route for company, req query is ..`, req.query);
-    console.log(`Inside the route for companies / `, companies);
+    let companies = await Company.getCompanies(req.query);
+
     return res.json({ companies });
   } catch (err) {
     return next(err);

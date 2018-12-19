@@ -7,40 +7,53 @@ class Company {
   /** Returns handle and name for all companies, also allows for specific query string params*/
   static async getCompanies(queryString) {
     let results;
-    console.log(`We are in getCompanies`);
-    if (!queryString) {
+
+    if (queryString === undefined) {
       // Returns handles and names for all companies
       results = await db.query(`SELECT handle, name FROM companies`);
-      console.log(`At the !querystring of company model`, results);
-    } else if (queryString === 'search') {
+    }
+    if (queryString.search) {
+      console.log('why are we in search again whyyyy');
       // Returns handles and names for companies where search string matches handle or name
       results = await db.query(
         `SELECT handle, name FROM companies WHERE handle LIKE $1 or name LIKE $1`,
-        [queryString]
+        [queryString.search]
       );
-    } else if (queryString === 'min_employees') {
+    }
+    if (queryString.min_employees) {
+      console.log('we made it into min employees');
       /** Returns companies with a minimum employee count > queryString */
       results = await db.query(
         `SELECT name, handle FROM companies WHERE num_employees > $1`,
-        [queryString]
+        [queryString.min_employees]
       );
-    } else if (queryString === 'max_employees') {
+    }
+    if (queryString.max_employees) {
       /** Returns companies with a maximum employee count < queryString */
       results = await db.query(
         `SELECT name, handle FROM companies WHERE num_employees < $1`,
-        [queryString]
+        [queryString.max_employees]
       );
-    }
 
-    // This will catch errors if there are no results
-    if (!results.rows[0]) {
-      throw new Error(`No company found through ${queryString}.`);
+      if (queryString.max_employees && queryString.min_employees) {
+        /** checks if min > max */
+        if (
+          Number(queryString.min_employees) > Number(queryString.max_employees)
+        ) {
+          let error = new Error(`Min employees exceeds max employees.`);
+          error.status = 400;
+          throw error;
+        }
+      }
+
+      // This will catch errors if there are no results
+      if (!results.rows[0]) {
+        throw new Error(`No company found through ${queryString}.`);
+      }
     }
-    console.log(`At the bottom of company model`, results);
     return results.rows;
+    // End of company class
   }
-
-  // End of company class
 }
 
 module.exports = Company;
