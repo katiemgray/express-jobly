@@ -19,30 +19,34 @@ router.get('/', async function(req, res, next) {
   }
 });
 
-// This route may require authentication middleware ***
 // Currently, this route adds a new company into our database
 router.post('/', async function(req, res, next) {
   const result = validate(req.body, companySchema);
   if (!result.valid) {
     // pass validation errors to error handler
+    // STATUS CODE IS INCORRECT -- VALIDATION DOESNT SEEM TO BE WORKING FOR JSON SCHEMA
     let message = result.errors.map(error => error.stack);
-    let status = 400;
+    let status = 409;
     let error = new APIError(message, status);
     return next(error);
   }
   // at this point in code, we know we have a valid payload
-  const { handle, name, num_employees, description, logo_url } = req.body;
-  const company = await Company.create({
-    handle,
-    name,
-    num_employees,
-    description,
-    logo_url
-  });
-  return res.json({ company });
+  try {
+    const { handle, name, num_employees, description, logo_url } = req.body;
+    const company = await Company.create({
+      handle,
+      name,
+      num_employees,
+      description,
+      logo_url
+    });
+    return res.json({ company });
+  } catch (error) {
+    return next(error);
+  }
 });
 
-// This route should return a single company found by its handle
+// This route should return a single company found by its handle.
 // It should return a JSON of {company: companyData}
 router.get('/:handle', async function(req, res, next) {
   try {
@@ -53,14 +57,14 @@ router.get('/:handle', async function(req, res, next) {
   }
 });
 
-// This route should update a single company by the handle provided
+// This route should update a single company by the handle provided.
 // It should return a JSON of {company: companyData}
 router.patch('/:handle', async function(req, res, next) {
   const result = validate(req.body, companySchema);
   if (!result.valid) {
     // pass validation errors to error handler
     let message = result.errors.map(error => error.stack);
-    let status = 400;
+    let status = 404;
     let error = new APIError(message, status);
     return next(error);
   }
@@ -77,7 +81,7 @@ router.patch('/:handle', async function(req, res, next) {
   return res.json({ company });
 });
 
-// This route should remove a company by the handle provided
+// This route should remove a company by the handle provided.
 // Should return a JSON of {message: "Company deleted"}
 router.delete('/:handle', async function(req, res, next) {
   try {

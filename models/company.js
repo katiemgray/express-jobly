@@ -56,11 +56,17 @@ class Company {
 
   // This method creates a new record for our company table, returning the new company record
   static async create({ handle, name, num_employees, description, logo_url }) {
-    const result = await db.query(
-      `INSERT INTO companies (handle, name, num_employees, description, logo_url) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [handle, name, num_employees, description, logo_url]
-    );
-    return result.rows[0];
+    try {
+      const result = await db.query(
+        `INSERT INTO companies (handle, name, num_employees, description, logo_url) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [handle, name, num_employees, description, logo_url]
+      );
+      return result.rows[0];
+    } catch (error) {
+      error.status = 409;
+      error.message = 'Company with that handle already exists :(';
+      throw error;
+    }
   }
 
   // getCompanyByHandle returns a single company found by its unique handle

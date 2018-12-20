@@ -91,7 +91,7 @@ describe('GET /companies/min_employees&max_employees', async function() {
     expect(response.body.companies[0].name).toBe('testCompany');
   });
   // Testing for failure if user error - min > max employee count
-  test('Responds with 400 if no company is found', async function() {
+  test('Responds with 400 if query params are incorrect', async function() {
     const response = await request(app).get(
       `/companies?min_employees=101&max_employees=99`
     );
@@ -132,8 +132,14 @@ describe('POST /companies', async function() {
     expect(response.body.company.handle).toBe('banana');
     expect(response.body.company.num_employees).toBe(500);
     expect(response.body.company.description).toBe('this is bananas');
+    // JSON schema validator will validate for bad user data
   });
-  // JSON schema validator will validate for bad user data
+  test('Responds with 409 if handle is not unique', async function() {
+    const response = await request(app)
+      .post(`/companies`)
+      .send({ handle: 'testHandle' });
+    expect(response.statusCode).toBe(409);
+  });
 });
 
 // PATCH /companies - updates company from specific handle provided in url, return {company: companyData}
@@ -154,6 +160,10 @@ describe('PATCH /companies', async function() {
     expect(response.body.company.description).toBe('this is updated');
     // JSON schema validator will validate for bad user data
   });
+  test('Responds with 404 if no company is found', async function() {
+    const response = await request(app).patch(`/companies/BADHANDLE`);
+    expect(response.statusCode).toBe(404);
+  });
 });
 
 // DELETE /companies - deletes a company with matching handle provided returning {message: "Company deleted"}
@@ -164,6 +174,7 @@ describe('DELETE /companies', async function() {
     expect(response.body).toEqual({ message: 'Company deleted' });
   });
 });
+/***************** END OF POST/PATCH/DELETE companies tests *****************/
 
 // Tear Down - removes records from test DB
 afterEach(async function() {
