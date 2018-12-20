@@ -45,5 +45,5 @@
       "pattern": "^(.*)$"
     }
   },
-  "required": ["name"]
+  "required": ["name", "handle"]
 }

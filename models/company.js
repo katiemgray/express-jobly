@@ -2,6 +2,7 @@
 
 const db = require('../db');
 const app = require('../app');
+const sqlForPartialUpdate = require('../helpers/partialUpdate');
 
 class Company {
   /** getCompanies returns handle and name for all companies, also allows for specific query string params*/
@@ -19,6 +20,7 @@ class Company {
         [queryString.search]
       );
     }
+    // if there are multiple query string params, add more WHERE clauses joined by and AND
     if (queryString.min_employees) {
       /** Returns companies with a minimum employee count > queryString */
       results = await db.query(
@@ -45,10 +47,10 @@ class Company {
       }
     }
 
-    // This will catch errors if there are no results
-    if (results.rows.length === 0) {
-      throw new Error(`No company found :(`);
-    }
+    // // This will catch errors if there are no results
+    // if (results.rows.length === 0) {
+    //   throw new Error(`No company found :(`);
+    // }
 
     return results.rows;
     // End of getCompanies static method
@@ -83,10 +85,18 @@ class Company {
 
   // update should update a company with user provided data
   static async update({ handle, name, num_employees, description, logo_url }) {
-    const result = await db.query(
-      `UPDATE companies SET name=$2, num_employees=$3, description=$4, logo_url=$5 WHERE handle=$1 RETURNING *`,
-      [handle, name, num_employees, description, logo_url]
+    // use sql for partialUpdate - pattern match table name, fields, primary key, and value of primary key
+    // use test to figure out if we have refactored correctly
+    let items = { handle, name, num_employees, description, logo_url };
+    let createdSQL = sqlForPartialUpdate(
+      'companies',
+      items,
+      'handle',
+      items.handle
     );
+
+    const result = await db.query(createdSQL.query, createdSQL.values);
+
     if (result.rows.length === 0) {
       throw new Error(`No company could be updated, no company found :(`);
     }

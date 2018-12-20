@@ -23,6 +23,9 @@ beforeEach(async () => {
   let companies = result.rows[0];
 });
 
+// test explicitly how many companies are getting back -
+// expect(req.body.companies.toHavelength(1))
+
 // TESTING route for getting all companies
 describe('GET /companies', async function() {
   test('gets all companies', async function() {
@@ -31,71 +34,77 @@ describe('GET /companies', async function() {
     expect(response.body.companies[0]).toHaveProperty('handle');
     expect(response.body.companies[0]).toHaveProperty('name');
   });
-  // TESTING for failures if no company exists in the DB
-  test('Responds with 500 if no company is found', async function() {
+  // Testing for no results from query
+  test('Responds with 200 if no company is found in the database', async function() {
     await db.query('DELETE FROM companies');
     const response = await request(app).get(`/companies`);
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.companies).toEqual([]);
   });
 });
 
-// TESTING route for getting specific companies with a search query
-describe('GET /companies/search', async function() {
-  test('gets specific company(s) with query of name or handle', async function() {
-    const response = await request(app).get(`/companies?search=testCompany`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.companies[0].name).toBe('testCompany');
+describe('GET query string params', async function() {
+  // TESTING route for getting specific companies with a search query
+  describe('GET /companies?search', async function() {
+    test('gets specific company(s) with query of name or handle', async function() {
+      const response = await request(app).get(`/companies?search=testCompany`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies[0].name).toBe('testCompany');
+    });
+    // Testing for no results from query
+    test('Responds with 200 if no company is found', async function() {
+      const response = await request(app).get(`/companies?search=BADSEARCH`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies).toEqual([]);
+    });
   });
-  // Testing for failures if no company is found with the search query
-  test('Responds with 500 if no company is found', async function() {
-    const response = await request(app).get(`/companies?search=BADSEARCH`);
-    expect(response.statusCode).toBe(500);
-  });
-});
 
-// TESTING route to find a company with min employee count of query
-describe('GET /companies/min_employees', async function() {
-  test('gets specific company(s) with query of min_employees', async function() {
-    const response = await request(app).get(`/companies?min_employees=99`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.companies[0].name).toBe('testCompany');
+  // TESTING route to find a company with min employee count of query
+  describe('GET /companies?min_employees', async function() {
+    test('gets specific company(s) with query of min_employees', async function() {
+      const response = await request(app).get(`/companies?min_employees=99`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies[0].name).toBe('testCompany');
+    });
+    // Testing for no results from query
+    test('Responds with 200 if no company is found', async function() {
+      const response = await request(app).get(`/companies?min_employees=101`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies).toEqual([]);
+    });
   });
-  // Testing for failure if no company is found
-  test('Responds with 500 if no company is found', async function() {
-    const response = await request(app).get(`/companies?min_employees=101`);
-    expect(response.statusCode).toBe(500);
-  });
-});
 
-// TESTING route to find a company with max employee count of query
-describe('GET /companies/max_employees', async function() {
-  test('gets specific company(s) with query of max_employees', async function() {
-    const response = await request(app).get(`/companies?max_employees=101`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.companies[0].name).toBe('testCompany');
+  // TESTING route to find a company with max employee count of query
+  describe('GET /companies?max_employees', async function() {
+    test('gets specific company(s) with query of max_employees', async function() {
+      const response = await request(app).get(`/companies?max_employees=101`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies[0].name).toBe('testCompany');
+    });
+    // Testing for no results from query
+    test('Responds with 200 if no company of such requirements exists', async function() {
+      const response = await request(app).get(`/companies?max_employees=99`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies).toEqual([]);
+    });
   });
-  // Testing for failure if no company is found
-  test('Responds with 500 if no company is found', async function() {
-    const response = await request(app).get(`/companies?max_employees=99`);
-    expect(response.statusCode).toBe(500);
-  });
-});
 
-// TESTING route for both min and max employee count filter
-describe('GET /companies/min_employees&max_employees', async function() {
-  test('gets specific company(s) with query of both min and max_employees', async function() {
-    const response = await request(app).get(
-      `/companies?min_employees=99&max_employees=101`
-    );
-    expect(response.statusCode).toBe(200);
-    expect(response.body.companies[0].name).toBe('testCompany');
-  });
-  // Testing for failure if user error - min > max employee count
-  test('Responds with 400 if query params are incorrect', async function() {
-    const response = await request(app).get(
-      `/companies?min_employees=101&max_employees=99`
-    );
-    expect(response.statusCode).toBe(400);
+  // TESTING route for both min and max employee count filter
+  describe('GET /companies/min_employees&max_employees', async function() {
+    test('gets specific company(s) with query of both min and max_employees', async function() {
+      const response = await request(app).get(
+        `/companies?min_employees=99&max_employees=101`
+      );
+      expect(response.statusCode).toBe(200);
+      expect(response.body.companies[0].name).toBe('testCompany');
+    });
+    // Testing for failure if user error - min > max employee count
+    test('Responds with 400 if query params are incorrect', async function() {
+      const response = await request(app).get(
+        `/companies?min_employees=101&max_employees=99`
+      );
+      expect(response.statusCode).toBe(400);
+    });
   });
 });
 
@@ -106,11 +115,13 @@ describe('GET /companies/handle', async function() {
     expect(response.statusCode).toBe(200);
     expect(response.body.company.name).toBe('testCompany');
   });
-  // Testing for failures if no company is found with the search query
-  test('Responds with 500 if no company is found', async function() {
+  // Testing for failures if no company is found with handle provided
+  test('Responds with 404 if no company is found with handle provided', async function() {
     const response = await request(app).get(`/companies/BADHANDLE`);
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(404);
   });
+
+  // TODO- more reqs for query string - what if they search for multiple query string params?
 });
 
 /***************** END OF GET companies tests *****************/
@@ -137,7 +148,7 @@ describe('POST /companies', async function() {
   test('Responds with 409 if handle is not unique', async function() {
     const response = await request(app)
       .post(`/companies`)
-      .send({ handle: 'testHandle' });
+      .send({ handle: 'testHandle', name: 'testCompany' });
     expect(response.statusCode).toBe(409);
   });
 });
@@ -173,12 +184,16 @@ describe('DELETE /companies', async function() {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({ message: 'Company deleted' });
   });
+  test('Responds with 404 if no company is found', async function() {
+    const response = await request(app).delete(`/companies/BADHANDLE`);
+    expect(response.statusCode).toBe(404);
+  });
 });
 /***************** END OF POST/PATCH/DELETE companies tests *****************/
 
 // Tear Down - removes records from test DB
 afterEach(async function() {
-  await db.query('DELETE FROM COMPANIES');
+  await db.query('DELETE FROM companies');
 });
 
 afterAll(async function() {
