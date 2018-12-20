@@ -73,13 +73,11 @@ class Company {
 
   // getCompanyByHandle returns a single company found by its unique handle
   static async getCompanybyHandle(handle) {
-    console.log(` We made it into GET Company By Handle`);
     const result = await db.query(`SELECT * FROM companies WHERE handle=$1`, [
       handle
     ]);
     // This will catch errors if there are no results
     if (result.rows.length === 0) {
-      console.log(` We made it into GET Company By Handle --- ERROR caught`);
       throw new Error(`No company found with that handle :(`);
     }
     return result.rows[0];

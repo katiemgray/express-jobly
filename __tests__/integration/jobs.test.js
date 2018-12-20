@@ -20,8 +20,9 @@ beforeEach(async () => {
 
   let result = await db.query(`
     INSERT INTO 
-      jobs (title, salary, equity, company_handle)   
+      jobs (id, title, salary, equity, company_handle)   
       VALUES(
+        1,
         'testJob', 
         22.22, 
         .50, 
@@ -30,6 +31,88 @@ beforeEach(async () => {
   let company = companyResult.rows[0];
   let job = result.rows[0];
 });
+
+// TESTING route for getting all jobs
+describe('GET /jobs', async function() {
+  test('gets all jobs', async function() {
+    const response = await request(app).get(`/jobs`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.jobs[0]).toHaveProperty('company_handle');
+    expect(response.body.jobs[0]).toHaveProperty('title');
+  });
+  // Testing for no results from query
+  test('Responds with 200 if no job is found in the database', async function() {
+    await db.query('DELETE FROM jobs');
+    const response = await request(app).get(`/jobs`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.jobs).toEqual([]);
+  });
+});
+
+describe('GET query string params', async function() {
+  // TESTING route for getting specific jobs with a search query
+  describe('GET /jobs?search', async function() {
+    test('gets specific job(s) with query of title', async function() {
+      const response = await request(app).get(`/jobs?search=testJob`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.jobs[0].title).toBe('testJob');
+    });
+    // Testing for no results from query
+    test('Responds with 200 if no job is found', async function() {
+      const response = await request(app).get(`/jobs?search=BADSEARCH`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.jobs).toEqual([]);
+    });
+  });
+
+  // TESTING route to find a job with min salary of query
+  describe('GET /jobs?min_salary', async function() {
+    test('gets specific job(s) with query of min_salary', async function() {
+      const response = await request(app).get(`/jobs?min_salary=10.50`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.jobs[0].title).toBe('testJob');
+    });
+    // Testing for no results from query
+    test('Responds with 200 if no job is found', async function() {
+      const response = await request(app).get(`/jobs?min_salary=100.50`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.jobs).toEqual([]);
+    });
+  });
+
+  // TESTING route to find a job with min equity of query
+  describe('GET /jobs?min_equity', async function() {
+    test('gets specific job(s) with query of min_equity', async function() {
+      const response = await request(app).get(`/jobs?min_equity=0.25`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.jobs[0].title).toBe('testJob');
+    });
+    // Testing for no results from query
+    test('Responds with 200 if no job is found', async function() {
+      const response = await request(app).get(`/jobs?min_equity=0.75`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.jobs).toEqual([]);
+    });
+  });
+
+  // TESTING route for getting specific job with an id
+  describe('GET /jobs/id', async function() {
+    test('gets specific job with specific id', async function() {
+      const response = await request(app).get(`/jobs/1`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.job.title).toBe('testJob');
+    });
+    // Testing for failures if no job is found with id provided
+    test('Responds with 404 if no job is found with id provided', async function() {
+      const response = await request(app).get(`/jobs/BADHANDLE`);
+      expect(response.statusCode).toBe(404);
+    });
+
+    // TODO- more reqs for query string - what if they search for multiple query string params?
+  });
+});
+
+/***************** END OF GET jobs tests *****************/
 
 // POST /jobs - create job from data; return {job: jobData}
 describe('POST /jobs', async function() {

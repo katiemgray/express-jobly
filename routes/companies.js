@@ -15,7 +15,7 @@ router.get('/', async function(req, res, next) {
     let companies = await Company.getCompanies(req.query);
     return res.json({ companies });
   } catch (err) {
-    // maybe set the error status HERE
+    err.status = 400;
     return next(err);
   }
 });
@@ -25,7 +25,6 @@ router.post('/', async function(req, res, next) {
   const result = validate(req.body, companySchema);
   if (!result.valid) {
     // pass validation errors to error handler
-    // STATUS CODE IS INCORRECT -- VALIDATION DOESNT SEEM TO BE WORKING FOR JSON SCHEMA
     let message = result.errors.map(error => error.stack);
     let status = 404;
     let error = new APIError(message, status);
@@ -88,7 +87,7 @@ router.patch('/:handle', async function(req, res, next) {
 // Should return a JSON of {message: "Company deleted"}
 router.delete('/:handle', async function(req, res, next) {
   try {
-    let company = await Company.delete(req.params.handle);
+    await Company.delete(req.params.handle);
     return res.json({ message: 'Company deleted' });
   } catch (err) {
     err.status = 404;

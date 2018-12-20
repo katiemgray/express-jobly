@@ -23,7 +23,7 @@ beforeEach(async () => {
   let companies = result.rows[0];
 });
 
-// test explicitly how many companies are getting back -
+// TODO test explicitly how many companies are getting back -
 // expect(req.body.companies.toHavelength(1))
 
 // TESTING route for getting all companies
