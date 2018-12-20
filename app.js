@@ -15,12 +15,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 /** routes */
 
 // const authRoutes = require('./routes/auth');
-// const userRoutes = require('./routes/users');
 const companyRoutes = require('./routes/companies');
+const jobRoutes = require('./routes/jobs');
 
 // app.use('/auth', authRoutes);
-// app.use('/users', userRoutes);
 app.use('/companies', companyRoutes);
+app.use('/jobs', jobRoutes);
 
 // add logging system
 

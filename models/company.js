@@ -11,7 +11,7 @@ class Company {
 
     if (Object.keys(queryString).length === 0) {
       // Returns handles and names for all companies
-      results = await db.query(`SELECT handle, name FROM companies`);
+      results = await db.query(`SELECT name, handle FROM companies`);
     }
     if (queryString.search) {
       // Returns handles and names for companies where search string matches handle or name
@@ -73,11 +73,13 @@ class Company {
 
   // getCompanyByHandle returns a single company found by its unique handle
   static async getCompanybyHandle(handle) {
+    console.log(` We made it into GET Company By Handle`);
     const result = await db.query(`SELECT * FROM companies WHERE handle=$1`, [
       handle
     ]);
     // This will catch errors if there are no results
     if (result.rows.length === 0) {
+      console.log(` We made it into GET Company By Handle --- ERROR caught`);
       throw new Error(`No company found with that handle :(`);
     }
     return result.rows[0];

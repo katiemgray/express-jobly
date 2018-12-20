@@ -14,8 +14,7 @@ CREATE TABLE jobs (
     id SERIAL PRIMARY KEY,
     title text NOT NULL,
     salary FLOAT NOT NULL,
-    equity FLOAT NOT NULL CHECK(equity > 1), 
-    -- how do we add a constrait to equity? in jsonschema?
+    equity FLOAT NOT NULL CHECK(equity < 1), 
     company_handle text NOT NULL REFERENCES companies ON DELETE CASCADE,
-    date_posted timestamp without time zone NOT NULL
+    date_posted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

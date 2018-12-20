@@ -18,8 +18,6 @@ describe('partialUpdate()', () => {
       'id',
       100
     );
-    console.log('dataToQuery', dataToQuery);
-    // FIXME: write real tests!
     expect(dataToQuery).toEqual({
       query:
         'UPDATE users SET firstName=$1, lastName=$2 WHERE id=$3 RETURNING *',

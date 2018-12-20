@@ -43,7 +43,7 @@ router.post('/', async function(req, res, next) {
     });
     return res.json({ company });
   } catch (error) {
-    // set the error status to 409 so it is more tightly coupled to the route than the model
+    error.status = 409;
     return next(error);
   }
 });
