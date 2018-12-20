@@ -27,6 +27,9 @@ app.use('/companies', companyRoutes);
 const morgan = require('morgan');
 app.use(morgan('tiny'));
 
+// add API Errors helper
+const APIError = require('./helpers/APIError');
+
 /** 404 handler */
 
 app.use(function(req, res, next) {
@@ -37,15 +40,13 @@ app.use(function(req, res, next) {
   return next(err);
 });
 
-/** general error handler */
-
+// global error handler
 app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-
-  return res.json({
-    error: err,
-    message: err.message
-  });
+  // all errors that get to here get coerced into API Errors
+  if (!(err instanceof APIError)) {
+    err = new APIError(err.message, err.status);
+  }
+  return res.status(err.status).json(err);
 });
 
 module.exports = app;

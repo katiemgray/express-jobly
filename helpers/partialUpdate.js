@@ -12,6 +12,7 @@
  */
 
 function sqlForPartialUpdate(table, items, key, id) {
+  //EXAMPLE: `sqlForPartialUpdate("users", {firstName:"Elie", lastName: "Schoppik"}, "id", 100)`
   // keep track of item indexes
   // store all the columns we want to update and associate with vals
 
