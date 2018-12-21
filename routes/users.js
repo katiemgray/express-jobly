@@ -9,7 +9,11 @@ const userSchema = require('../schemas/userSchema.json');
 const APIError = require('../helpers/APIError');
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
-const { ensureLoggedIn, ensureCorrectUser } = require('../middleware/auth');
+const {
+  ensureLoggedIn,
+  ensureCorrectUser,
+  ensureAdmin
+} = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const SECRET = 'NEVER MAKE THIS PUBLIC IN PRODUCTION!';
 const OPTIONS = { expiresIn: 60 * 60 }; // 1 hour
@@ -35,8 +39,10 @@ router.post('/', async function(req, res, next) {
       photo_url,
       is_admin
     } = req.body;
-    const user = await User.create(req.body);
-    return res.json({ user });
+    await User.create(req.body);
+    // After user is created in the DB, return JSON: {token: token}
+    let token = jwt.sign({ username, is_admin }, SECRET, OPTIONS);
+    return res.json({ token });
   } catch (error) {
     error.status = 409;
     return next(error);
@@ -91,7 +97,7 @@ router.get('/:username', async function(req, res, next) {
 
 // This route should update a single job by the id provided.
 // It should return a JSON of {job: jobData}
-router.patch('/:username', async function(req, res, next) {
+router.patch('/:username', ensureCorrectUser, async function(req, res, next) {
   const result = validate(req.body, userSchema);
   if (!result.valid) {
     // pass validation errors to error handler
@@ -102,10 +108,10 @@ router.patch('/:username', async function(req, res, next) {
   }
   // at this point in code, we know we have a valid payload
   const username = req.params.username;
-
   const { password, first_name, last_name, email, photo_url } = req.body;
 
   try {
+    await User.getUserByUsername(username);
     const user = await User.update({
       username,
       password,
@@ -131,8 +137,9 @@ router.patch('/:username', async function(req, res, next) {
 
 // This route should remove a user by the username provided.
 // Should return a JSON of {message: "User deleted"}
-router.delete('/:username', async function(req, res, next) {
+router.delete('/:username', ensureCorrectUser, async function(req, res, next) {
   try {
+    await User.getUserByUsername(req.params.username);
     await User.delete(req.params.username);
     return res.json({ message: 'User deleted' });
   } catch (err) {

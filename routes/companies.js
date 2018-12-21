@@ -7,10 +7,15 @@ const db = require('../db');
 const { validate } = require('jsonschema');
 const companySchema = require('../schemas/companySchema.json');
 const APIError = require('../helpers/APIError');
+const {
+  ensureLoggedIn,
+  ensureCorrectUser,
+  ensureAdmin
+} = require('../middleware/auth');
 
 // If the query string parameter is passed, a filtered list of handles and names.
 // Handles should be displayed based on the search term and if the name includes it.
-router.get('/', async function(req, res, next) {
+router.get('/', ensureLoggedIn, async function(req, res, next) {
   try {
     let companies = await Company.getCompanies(req.query);
     return res.json({ companies });
@@ -21,7 +26,7 @@ router.get('/', async function(req, res, next) {
 });
 
 // Currently, this route adds a new company into our database
-router.post('/', async function(req, res, next) {
+router.post('/', ensureAdmin, async function(req, res, next) {
   const result = validate(req.body, companySchema);
   if (!result.valid) {
     // pass validation errors to error handler
@@ -49,7 +54,7 @@ router.post('/', async function(req, res, next) {
 
 // This route should return a single company found by its handle.
 // It should return a JSON of {company: companyData}
-router.get('/:handle', async function(req, res, next) {
+router.get('/:handle', ensureLoggedIn, async function(req, res, next) {
   try {
     let company = await Company.getCompanybyHandle(req.params.handle);
     return res.json({ company });
@@ -61,7 +66,7 @@ router.get('/:handle', async function(req, res, next) {
 
 // This route should update a single company by the handle provided.
 // It should return a JSON of {company: companyData}
-router.patch('/:handle', async function(req, res, next) {
+router.patch('/:handle', ensureAdmin, async function(req, res, next) {
   const result = validate(req.body, companySchema);
   if (!result.valid) {
     // pass validation errors to error handler
@@ -91,7 +96,7 @@ router.patch('/:handle', async function(req, res, next) {
 
 // This route should remove a company by the handle provided.
 // Should return a JSON of {message: "Company deleted"}
-router.delete('/:handle', async function(req, res, next) {
+router.delete('/:handle', ensureAdmin, async function(req, res, next) {
   try {
     await Company.delete(req.params.handle);
     return res.json({ message: 'Company deleted' });

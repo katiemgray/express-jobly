@@ -8,6 +8,8 @@ const app = require('../../app');
 const db = require('../../db');
 const bcrypt = require('bcrypt');
 
+let auth = {};
+
 beforeEach(async () => {
   let companyResult = await db.query(`
     INSERT INTO
@@ -47,11 +49,14 @@ beforeEach(async () => {
         'testLastName',
         'test@test.com',
         'https://www.photo.com',
-        'false') RETURNING *`,
+        'true') RETURNING *`,
     [hashedPassword]
   );
 
-  // job = result.rows[0];
+  const response = await request(app)
+    .post('/users/login')
+    .send({ username: 'testUsername', password: '12345' });
+  auth.token = response.body.token;
 });
 
 // TESTING route for getting all users
@@ -67,7 +72,6 @@ describe('GET /users', async function() {
   test('Responds with 200 if no user is found in the database', async function() {
     await db.query('DELETE FROM users');
     const response = await request(app).get(`/users`);
-    console.log('THIS IS THE RESPONSE', response.body);
     expect(response.statusCode).toBe(200);
     expect(response.body.users).toEqual([]);
   });
@@ -110,10 +114,9 @@ describe('POST /users', async function() {
     let hashedPassword = await bcrypt.hash('12345', 1);
     let password = await bcrypt.compare('12345', hashedPassword);
     expect(response.statusCode).toBe(200);
-    expect(response.body.user.username).toBe('newUser');
+    expect(response.body).toHaveProperty('token');
     expect(password).toBe(true);
-    expect(response.body.user.first_name).toBe('Jon');
-    expect(response.body.user.is_admin).toBe(false);
+
     // JSON schema validator will validate for bad user data
   });
   test('Responds with 409 if username is taken', async function() {
@@ -135,6 +138,7 @@ describe('POST /users', async function() {
 // PATCH /users - updates user from specific handle provided in url, return {user: userData}
 describe('PATCH /users/:username', async function() {
   test('updates a user', async function() {
+    console.log(`IN PATCH users/username, token is`, auth.token);
     const response = await request(app)
       .patch(`/users/testUsername`)
       .send({
@@ -144,7 +148,8 @@ describe('PATCH /users/:username', async function() {
         last_name: 'Kung',
         email: 'j@j.com',
         photo_url: '',
-        is_admin: false
+        is_admin: false,
+        _token: auth.token
       });
     expect(response.statusCode).toBe(200);
     expect(response.body.user.username).toBe('testUsername');
@@ -153,7 +158,7 @@ describe('PATCH /users/:username', async function() {
     expect(response.body.user.email).toBe('j@j.com');
     // JSON schema validator will validate for bad user data
   });
-  test('Responds with 404 if no user is found', async function() {
+  test('Responds with 401 if no user is found', async function() {
     const response = await request(app)
       .patch(`/users/BADUSERNAME`)
       .send({
@@ -163,22 +168,25 @@ describe('PATCH /users/:username', async function() {
         last_name: 'TestLastName',
         email: 'j@j.com',
         photo_url: '',
-        is_admin: false
+        is_admin: false,
+        _token: auth.token
       });
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(401);
   });
 });
 
 // DELETE /users - deletes a user with matching id provided returning {message: "user deleted"}
 describe('DELETE /users/:username', async function() {
   test('deletes a user', async function() {
-    const response = await request(app).delete(`/users/testUsername`);
+    const response = await request(app)
+      .delete(`/users/testUsername`)
+      .send({ _token: auth.token });
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({ message: 'User deleted' });
   });
-  test('Responds with 404 if no user is found', async function() {
+  test('Responds with 401 if no user is found', async function() {
     const response = await request(app).delete(`/users/BADHANDLE`);
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(401);
   });
 });
 /***************** END OF POST/PATCH/DELETE users tests *****************/

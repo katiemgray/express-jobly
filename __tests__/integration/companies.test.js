@@ -6,6 +6,10 @@ const request = require('supertest');
 
 const app = require('../../app');
 const db = require('../../db');
+const bcrypt = require('bcrypt');
+
+let auth = {};
+// TO DO !!!! NEED TO FIX TESTS HERE
 
 beforeEach(async () => {
   let result = await db.query(`
@@ -26,6 +30,34 @@ beforeEach(async () => {
     11.11, 
     '0.11', 
     'testHandle') RETURNING *`);
+
+  let hashedPassword = await bcrypt.hash('12345', 1);
+
+  let userResult = await db.query(
+    `
+      INSERT INTO 
+        users (username,
+          password,
+          first_name,
+          last_name,
+          email,
+          photo_url,
+          is_admin)   
+        VALUES(
+          'testUsername',
+          $1,
+          'testFirstName',
+          'testLastName',
+          'test@test.com',
+          'https://www.photo.com',
+          'true') RETURNING *`,
+    [hashedPassword]
+  );
+
+  const response = await request(app)
+    .post('/users/login')
+    .send({ username: 'testUsername', password: '12345' });
+  auth.token = response.body.token;
 
   let companies = result.rows[0];
 });
@@ -203,6 +235,8 @@ describe('DELETE /companies', async function() {
 
 // Tear Down - removes records from test DB
 afterEach(async function() {
+  await db.query('DELETE FROM users');
+  await db.query('DELETE FROM jobs');
   await db.query('DELETE FROM companies');
 });
 

@@ -8,10 +8,15 @@ const { validate } = require('jsonschema');
 const jobSchema = require('../schemas/jobSchema.json');
 const APIError = require('../helpers/APIError');
 const Company = require('../models/company');
+const {
+  ensureLoggedIn,
+  ensureCorrectUser,
+  ensureAdmin
+} = require('../middleware/auth');
 
 // If the query string parameter is passed, a filtered list of handles and titles.
 // Handles should be displayed based on the search term and if the name includes it.
-router.get('/', async function(req, res, next) {
+router.get('/', ensureLoggedIn, async function(req, res, next) {
   try {
     let jobs = await Job.getJobs(req.query);
     return res.json({ jobs });
@@ -22,7 +27,7 @@ router.get('/', async function(req, res, next) {
 });
 
 // This route adds a new job into our database, returning {job: jobData}
-router.post('/', async function(req, res, next) {
+router.post('/', ensureAdmin, async function(req, res, next) {
   const result = validate(req.body, jobSchema);
   if (!result.valid) {
     // pass validation errors to error handler
@@ -46,7 +51,7 @@ router.post('/', async function(req, res, next) {
 
 // This route should return a single job found by its id.
 // It should return a JSON of {job: jobData}
-router.get('/:id', async function(req, res, next) {
+router.get('/:id', ensureLoggedIn, async function(req, res, next) {
   try {
     let job = await Job.getJobById(req.params.id);
     return res.json({ job });
@@ -58,7 +63,7 @@ router.get('/:id', async function(req, res, next) {
 
 // This route should update a single job by the id provided.
 // It should return a JSON of {job: jobData}
-router.patch('/:id', async function(req, res, next) {
+router.patch('/:id', ensureAdmin, async function(req, res, next) {
   const result = validate(req.body, jobSchema);
   if (!result.valid) {
     // pass validation errors to error handler
@@ -89,7 +94,7 @@ router.patch('/:id', async function(req, res, next) {
 
 // This route should remove a job by the id provided.
 // Should return a JSON of {message: "Job deleted"}
-router.delete('/:id', async function(req, res, next) {
+router.delete('/:id', ensureAdmin, async function(req, res, next) {
   try {
     await Job.delete(req.params.id);
     return res.json({ message: 'Job deleted' });
