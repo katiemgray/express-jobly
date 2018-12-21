@@ -15,6 +15,7 @@ class Job {
   }
 
   // This method searches for jobs based on query string, or returns all jobs
+  // Should return JSON of {jobs: [jobData, ...]}
   static async getJobs(queryString) {
     let results;
 
@@ -23,6 +24,7 @@ class Job {
       results = await db.query(
         `SELECT title, company_handle FROM jobs ORDER BY date_posted DESC`
       );
+      return results.rows;
     }
 
     if (queryString.search) {
@@ -31,7 +33,6 @@ class Job {
         `SELECT title, company_handle FROM jobs WHERE title LIKE $1`,
         [queryString.search]
       );
-      console.log('in get jobs job model, the results ', results);
     }
 
     if (queryString.min_salary) {
@@ -49,6 +50,8 @@ class Job {
         [queryString.min_equity]
       );
     }
+    console.log(`This is result in JOB model --- `, results.rows);
+    console.log(`This is result rows [0] in JOB model --- `, results.rows[0]);
 
     return results.rows;
     // End of getJobs static method
@@ -65,10 +68,10 @@ class Job {
   }
 
   // update should update a job with user provided data
-  static async update({ title, salary, equity, company_handle }) {
+  static async update({ id, title, salary, equity, company_handle }) {
     // use sql for partialUpdate - pattern match table name, fields, primary key, and value of primary key
 
-    let items = { title, salary, equity, company_handle };
+    let items = { id, title, salary, equity, company_handle };
     let createdSQL = sqlForPartialUpdate('jobs', items, 'id', items.id);
 
     const result = await db.query(createdSQL.query, createdSQL.values);

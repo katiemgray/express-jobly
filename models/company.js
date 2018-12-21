@@ -12,6 +12,8 @@ class Company {
     if (Object.keys(queryString).length === 0) {
       // Returns handles and names for all companies
       results = await db.query(`SELECT name, handle FROM companies`);
+      let company = results.rows.map(c => c.name);
+      return company;
     }
     if (queryString.search) {
       // Returns handles and names for companies where search string matches handle or name
@@ -73,14 +75,24 @@ class Company {
 
   // getCompanyByHandle returns a single company found by its unique handle
   static async getCompanybyHandle(handle) {
-    const result = await db.query(`SELECT * FROM companies WHERE handle=$1`, [
-      handle
-    ]);
+    console.log(`made it inside getcompanybyhandle`);
+    const companyResult = await db.query(
+      `SELECT * FROM companies WHERE handle=$1`,
+      [handle]
+    );
+    const jobResult = await db.query(
+      `SELECT title FROM jobs JOIN companies ON company_handle=$1`,
+      [handle]
+    );
+    // console.log(` This is the getCompanybyHandle job results`, jobResult);
+    let listOfJobs = jobResult.rows;
+    const company = companyResult.rows[0];
+    company.jobs = listOfJobs;
     // This will catch errors if there are no results
-    if (result.rows.length === 0) {
+    if (companyResult.rows.length === 0) {
       throw new Error(`No company found with that handle :(`);
     }
-    return result.rows[0];
+    return company;
   }
 
   // update should update a company with user provided data

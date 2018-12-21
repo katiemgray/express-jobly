@@ -18,7 +18,14 @@ beforeEach(async () => {
         'The best test of the rest, I DO NOT JEST', 
         'https://www.url.com') RETURNING *`);
 
-  // console.log('this is the result', result);
+  let jobResult = await db.query(`INSERT INTO 
+  jobs (id, title, salary, equity, company_handle)   
+  VALUES(
+    '1', 
+    'testJobTitle', 
+    11.11, 
+    '0.11', 
+    'testHandle') RETURNING *`);
 
   let companies = result.rows[0];
 });
@@ -31,8 +38,7 @@ describe('GET /companies', async function() {
   test('gets all companies', async function() {
     const response = await request(app).get(`/companies`);
     expect(response.statusCode).toBe(200);
-    expect(response.body.companies[0]).toHaveProperty('handle');
-    expect(response.body.companies[0]).toHaveProperty('name');
+    expect(response.body).toHaveProperty('companies');
   });
   // Testing for no results from query
   test('Responds with 200 if no company is found in the database', async function() {
@@ -113,6 +119,10 @@ describe('GET /companies/handle', async function() {
   test('gets specific company with specific handle', async function() {
     const response = await request(app).get(`/companies/testHandle`);
     expect(response.statusCode).toBe(200);
+    console.log(
+      `Inside test for companies/handle GET, response is`,
+      response.body
+    );
     expect(response.body.company.name).toBe('testCompany');
   });
   // Testing for failures if no company is found with handle provided
@@ -154,7 +164,7 @@ describe('POST /companies', async function() {
 });
 
 // PATCH /companies - updates company from specific handle provided in url, return {company: companyData}
-describe('PATCH /companies', async function() {
+describe('PATCH /companies/:handle', async function() {
   test('updates a company', async function() {
     const response = await request(app)
       .patch(`/companies/testHandle`)

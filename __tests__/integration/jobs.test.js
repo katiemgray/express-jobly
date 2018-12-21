@@ -37,8 +37,7 @@ describe('GET /jobs', async function() {
   test('gets all jobs', async function() {
     const response = await request(app).get(`/jobs`);
     expect(response.statusCode).toBe(200);
-    expect(response.body.jobs[0]).toHaveProperty('company_handle');
-    expect(response.body.jobs[0]).toHaveProperty('title');
+    expect(response.body).toHaveProperty('jobs');
   });
   // Testing for no results from query
   test('Responds with 200 if no job is found in the database', async function() {
@@ -113,6 +112,7 @@ describe('GET query string params', async function() {
 });
 
 /***************** END OF GET jobs tests *****************/
+/***************** BEGINNING OF POST/PATCH/DELETE jobs tests  ***************/
 
 // POST /jobs - create job from data; return {job: jobData}
 describe('POST /jobs', async function() {
@@ -139,6 +139,44 @@ describe('POST /jobs', async function() {
     expect(response.statusCode).toBe(400);
   });
 });
+
+// PATCH /jobs - updates job from specific handle provided in url, return {job: jobData}
+describe('PATCH /jobs/:id', async function() {
+  test('updates a job', async function() {
+    const response = await request(app)
+      .patch(`/jobs/1`)
+      .send({
+        title: 'updatedJobTitle',
+        salary: 99.99,
+        equity: 0.33,
+        company_handle: 'testHandle2'
+      });
+    expect(response.statusCode).toBe(200);
+    expect(response.body.job.title).toBe('updatedJobTitle');
+    expect(response.body.job.salary).toBe(99.99);
+    expect(response.body.job.equity).toBe(0.33);
+    expect(response.body.job.company_handle).toBe('testHandle2');
+    // JSON schema validator will validate for bad user data
+  });
+  test('Responds with 404 if no job is found', async function() {
+    const response = await request(app).patch(`/jobs/BADHANDLE`);
+    expect(response.statusCode).toBe(404);
+  });
+});
+
+// DELETE /jobs - deletes a job with matching id provided returning {message: "Job deleted"}
+describe('DELETE /jobs/:id', async function() {
+  test('deletes a job', async function() {
+    const response = await request(app).delete(`/jobs/1`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ message: 'Job deleted' });
+  });
+  test('Responds with 404 if no company is found', async function() {
+    const response = await request(app).delete(`/jobs/BADHANDLE`);
+    expect(response.statusCode).toBe(404);
+  });
+});
+/***************** END OF POST/PATCH/DELETE jobs tests *****************/
 
 // Tear Down - removes records from test DB
 afterEach(async function() {

@@ -69,6 +69,7 @@ router.patch('/:id', async function(req, res, next) {
   }
   // at this point in code, we know we have a valid payload
   const id = req.params.id;
+  console.log(`this is the ID in the job route for patch`, id);
   const { title, salary, equity, company_handle } = req.body;
   const job = await Job.update({
     id,
