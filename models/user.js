@@ -2,6 +2,7 @@
 
 const db = require('../db');
 const app = require('../app');
+const bcrypt = require('bcrypt');
 const sqlForPartialUpdate = require('../helpers/partialUpdate');
 
 class User {
@@ -16,9 +17,18 @@ class User {
     is_admin
   }) {
     try {
+      const hashedPassword = await bcrypt.hash(password, 1);
       const result = await db.query(
         `INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [username, password, first_name, last_name, email, photo_url, is_admin]
+        [
+          username,
+          hashedPassword,
+          first_name,
+          last_name,
+          email,
+          photo_url,
+          is_admin
+        ]
       );
       return result.rows[0];
     } catch (error) {

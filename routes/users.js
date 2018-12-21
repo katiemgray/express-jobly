@@ -8,20 +8,13 @@ const { validate } = require('jsonschema');
 const userSchema = require('../schemas/userSchema.json');
 const APIError = require('../helpers/APIError');
 const User = require('../models/user');
-
-// Route to get all users
-router.get('/', async function(req, res, next) {
-  try {
-    let users = await User.getUsers();
-    return res.json({ users });
-  } catch (err) {
-    err.status = 400;
-    return next(err);
-  }
-});
+const bcrypt = require('bcrypt');
+const { ensureLoggedIn, ensureCorrectUser } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const SECRET = 'NEVER MAKE THIS PUBLIC IN PRODUCTION!';
+const OPTIONS = { expiresIn: 60 * 60 }; // 1 hour
 
 // This route adds a new user into our database, returning {user: user}
-
 router.post('/', async function(req, res, next) {
   const result = validate(req.body, userSchema);
   if (!result.valid) {
@@ -50,8 +43,42 @@ router.post('/', async function(req, res, next) {
   }
 });
 
-// This route should return a single job found by its id.
-// It should return a JSON of {job: jobData}
+// This route authenticates a user and returns a JSON web token
+// which contains a payload w/ username, and is_admin values
+router.post('/login', async function(req, res, next) {
+  try {
+    const { username, password } = req.body;
+    const result = await db.query(
+      `SELECT password, is_admin FROM users WHERE username=$1`,
+      [username]
+    );
+    const user = result.rows[0];
+    const is_admin = result.rows[0].is_admin;
+    if (user) {
+      if (await bcrypt.compare(password, user.password)) {
+        let token = jwt.sign({ username, is_admin }, SECRET, OPTIONS);
+        return res.json({ token });
+      }
+    }
+    return next({ message: 'Invalid username or password' });
+  } catch (error) {
+    return res.json(error);
+  }
+});
+
+// Route to get all users
+router.get('/', async function(req, res, next) {
+  try {
+    let users = await User.getUsers();
+    return res.json({ users });
+  } catch (err) {
+    err.status = 400;
+    return next(err);
+  }
+});
+
+// This route should return a single user found by username.
+// It should return a JSON of {user: userData}
 router.get('/:username', async function(req, res, next) {
   try {
     let user = await User.getUserByUsername(req.params.username);

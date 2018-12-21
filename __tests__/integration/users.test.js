@@ -6,6 +6,7 @@ const request = require('supertest');
 
 const app = require('../../app');
 const db = require('../../db');
+const bcrypt = require('bcrypt');
 
 beforeEach(async () => {
   let companyResult = await db.query(`
@@ -28,7 +29,9 @@ beforeEach(async () => {
         .50, 
         'testHandle2') RETURNING *`);
 
-  let userResult = await db.query(`
+  let hashedPassword = await bcrypt.hash('12345', 1);
+  let userResult = await db.query(
+    `
     INSERT INTO 
       users (username,
         password,
@@ -39,12 +42,14 @@ beforeEach(async () => {
         is_admin)   
       VALUES(
         'testUsername',
-        12345,
+        $1,
         'testFirstName',
         'testLastName',
         'test@test.com',
         'https://www.photo.com',
-        'false') RETURNING *`);
+        'false') RETURNING *`,
+    [hashedPassword]
+  );
 
   // job = result.rows[0];
 });
@@ -94,20 +99,19 @@ describe('POST /users', async function() {
       .post(`/users`)
       .send({
         username: 'newUser',
-        password: '123',
+        password: '12345',
         first_name: 'Jon',
         last_name: 'Kung',
         email: 'j@j.com',
         photo_url: '',
         is_admin: false
       });
-    console.log(
-      `This is in the test for POST users, response is: `,
-      response.body
-    );
+
+    let hashedPassword = await bcrypt.hash('12345', 1);
+    let password = await bcrypt.compare('12345', hashedPassword);
     expect(response.statusCode).toBe(200);
     expect(response.body.user.username).toBe('newUser');
-    expect(response.body.user.password).toBe('123');
+    expect(password).toBe(true);
     expect(response.body.user.first_name).toBe('Jon');
     expect(response.body.user.is_admin).toBe(false);
     // JSON schema validator will validate for bad user data
