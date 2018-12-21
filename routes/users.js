@@ -50,5 +50,69 @@ router.post('/', async function(req, res, next) {
   }
 });
 
+// This route should return a single job found by its id.
+// It should return a JSON of {job: jobData}
+router.get('/:username', async function(req, res, next) {
+  try {
+    let user = await User.getUserByUsername(req.params.username);
+    return res.json({ user });
+  } catch (err) {
+    err.status = 404;
+    return next(err);
+  }
+});
+
+// This route should update a single job by the id provided.
+// It should return a JSON of {job: jobData}
+router.patch('/:username', async function(req, res, next) {
+  const result = validate(req.body, userSchema);
+  if (!result.valid) {
+    // pass validation errors to error handler
+    let message = result.errors.map(error => error.stack);
+    let status = 400;
+    let error = new APIError(message, status);
+    return next(error);
+  }
+  // at this point in code, we know we have a valid payload
+  const username = req.params.username;
+
+  const { password, first_name, last_name, email, photo_url } = req.body;
+
+  try {
+    const user = await User.update({
+      username,
+      password,
+      first_name,
+      last_name,
+      email,
+      photo_url
+    });
+    return res.json({
+      user: {
+        username,
+        first_name,
+        last_name,
+        email,
+        photo_url
+      }
+    });
+  } catch (err) {
+    err.status = 404;
+    return next(err);
+  }
+});
+
+// This route should remove a user by the username provided.
+// Should return a JSON of {message: "User deleted"}
+router.delete('/:username', async function(req, res, next) {
+  try {
+    await User.delete(req.params.username);
+    return res.json({ message: 'User deleted' });
+  } catch (err) {
+    err.status = 404;
+    return next(err);
+  }
+});
+
 // end of user routes
 module.exports = router;
