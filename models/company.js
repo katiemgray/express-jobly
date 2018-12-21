@@ -75,7 +75,6 @@ class Company {
 
   // getCompanyByHandle returns a single company found by its unique handle
   static async getCompanybyHandle(handle) {
-    console.log(`made it inside getcompanybyhandle`);
     const companyResult = await db.query(
       `SELECT * FROM companies WHERE handle=$1`,
       [handle]

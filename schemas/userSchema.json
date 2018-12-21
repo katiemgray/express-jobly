@@ -1,0 +1,71 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "username",
+    "password",
+    "first_name",
+    "last_name",
+    "email",
+    "is_admin"
+  ],
+  "properties": {
+    "username": {
+      "$id": "#/properties/username",
+      "type": "string",
+      "title": "The Username Schema",
+      "default": "",
+      "examples": ["jkung"],
+      "pattern": "^(.*)$"
+    },
+    "password": {
+      "$id": "#/properties/password",
+      "type": ["string", "integer"],
+      "title": "The Password Schema",
+      "default": 0,
+      "examples": [123]
+    },
+    "first_name": {
+      "$id": "#/properties/first_name",
+      "type": "string",
+      "title": "The First_name Schema",
+      "default": "",
+      "examples": ["Jon"],
+      "pattern": "^(.*)$"
+    },
+    "last_name": {
+      "$id": "#/properties/last_name",
+      "type": "string",
+      "title": "The Last_name Schema",
+      "default": "",
+      "examples": ["Kung"],
+      "pattern": "^(.*)$"
+    },
+    "email": {
+      "$id": "#/properties/email",
+      "type": "string",
+      "title": "The Email Schema",
+      "default": "",
+      "examples": ["j@j.com"],
+      "pattern": "^(.*)$"
+    },
+    "photo_url": {
+      "$id": "#/properties/photo_url",
+      "type": "string",
+      "title": "The Photo_url Schema",
+      "default": "",
+      "examples": ["https://www.testphotourl.com"],
+      "pattern": "^(.*)$"
+    },
+    "is_admin": {
+      "$id": "#/properties/is_admin",
+      "type": "boolean",
+      "title": "The Is_admin Schema",
+      "default": "false",
+      "examples": ["false"]
+    }
+  }
+}

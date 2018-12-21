@@ -7,6 +7,8 @@ const request = require('supertest');
 const app = require('../../app');
 const db = require('../../db');
 
+// let job;
+
 beforeEach(async () => {
   let companyResult = await db.query(`
     INSERT INTO
@@ -28,8 +30,7 @@ beforeEach(async () => {
         .50, 
         'testHandle2') RETURNING *`);
 
-  let company = companyResult.rows[0];
-  let job = result.rows[0];
+  // job = result.rows[0];
 });
 
 // TESTING route for getting all jobs
@@ -38,6 +39,7 @@ describe('GET /jobs', async function() {
     const response = await request(app).get(`/jobs`);
     expect(response.statusCode).toBe(200);
     expect(response.body).toHaveProperty('jobs');
+    expect(response.body.jobs).toHaveLength(1);
   });
   // Testing for no results from query
   test('Responds with 200 if no job is found in the database', async function() {
@@ -55,6 +57,7 @@ describe('GET query string params', async function() {
       const response = await request(app).get(`/jobs?search=testJob`);
       expect(response.statusCode).toBe(200);
       expect(response.body.jobs[0].title).toBe('testJob');
+      expect(response.body.jobs).toHaveLength(1);
     });
     // Testing for no results from query
     test('Responds with 200 if no job is found', async function() {
@@ -97,7 +100,7 @@ describe('GET query string params', async function() {
   // TESTING route for getting specific job with an id
   describe('GET /jobs/id', async function() {
     test('gets specific job with specific id', async function() {
-      const response = await request(app).get(`/jobs/1`);
+      const response = await request(app).get(`/jobs/1`); // job.id
       expect(response.statusCode).toBe(200);
       expect(response.body.job.title).toBe('testJob');
     });
@@ -135,7 +138,7 @@ describe('POST /jobs', async function() {
   test('Responds with 400 if handle is not found', async function() {
     const response = await request(app)
       .post(`/jobs`)
-      .send({ handle: 'BADHANDLE', title: 'taco' });
+      .send({ company_handle: 'BADHANDLE', title: 'taco' });
     expect(response.statusCode).toBe(400);
   });
 });
@@ -159,7 +162,14 @@ describe('PATCH /jobs/:id', async function() {
     // JSON schema validator will validate for bad user data
   });
   test('Responds with 404 if no job is found', async function() {
-    const response = await request(app).patch(`/jobs/BADHANDLE`);
+    const response = await request(app)
+      .patch(`/jobs/200`)
+      .send({
+        title: 'updatedJobTitle',
+        salary: 99.99,
+        equity: 0.33,
+        company_handle: 'testHandle2'
+      });
     expect(response.statusCode).toBe(404);
   });
 });
