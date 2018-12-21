@@ -73,14 +73,20 @@ router.patch('/:handle', async function(req, res, next) {
   // at this point in code, we know we have a valid payload
   const handle = req.params.handle;
   const { name, num_employees, description, logo_url } = req.body;
-  const company = await Company.update({
-    handle,
-    name,
-    num_employees,
-    description,
-    logo_url
-  });
-  return res.json({ company });
+
+  try {
+    const company = await Company.update({
+      handle,
+      name,
+      num_employees,
+      description,
+      logo_url
+    });
+    return res.json({ company });
+  } catch (err) {
+    err.status = 404;
+    return next(err);
+  }
 });
 
 // This route should remove a company by the handle provided.
