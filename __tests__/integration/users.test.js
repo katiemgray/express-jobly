@@ -69,7 +69,7 @@ describe('GET /users', async function() {
     expect(response.body.users).toHaveLength(1);
   });
   // Testing for no results from query
-  test('Responds with 200 if no user is found in the database', async function() {
+  test('Responds with empty list of users, if no users are found in database', async function() {
     await db.query('DELETE FROM users');
     const response = await request(app).get(`/users`);
     expect(response.statusCode).toBe(200);

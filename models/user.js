@@ -16,26 +16,29 @@ class User {
     photo_url,
     is_admin
   }) {
-    try {
-      const hashedPassword = await bcrypt.hash(password, 1);
-      const result = await db.query(
-        `INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [
-          username,
-          hashedPassword,
-          first_name,
-          last_name,
-          email,
-          photo_url,
-          is_admin
-        ]
-      );
-      return result.rows[0];
-    } catch (error) {
-      error.status = 409;
-      error.message = 'Username already exists :(';
-      throw error;
+    const check = await db.query(
+      `SELECT * FROM users WHERE username=$1 or email=$2`,
+      [username, email]
+    );
+
+    if (check.rows.length > 0) {
+      throw new Error('Username or email already exists :(', 409);
     }
+
+    const hashedPassword = await bcrypt.hash(password, 1);
+    const result = await db.query(
+      `INSERT INTO users (username, password, first_name, last_name, email, photo_url, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        username,
+        hashedPassword,
+        first_name,
+        last_name,
+        email,
+        photo_url,
+        is_admin
+      ]
+    );
+    return result.rows[0];
   }
 
   static async getUsers() {
@@ -43,11 +46,10 @@ class User {
     let results = await db.query(
       `SELECT username, first_name, last_name, email FROM users`
     );
-
-    // CONFUSED!! WHY DOES THIS HAVE TO BE UNDEFINED? results.rows should be an empty array
-    if (results.rows.length === undefined) {
-      throw new Error(`No users found :(`);
-    }
+    // We don't need this logic, empty array is OK to return if no users are found
+    // if (results.rows.length === 0) {
+    //   throw new Error(`No users found :(`);
+    // }
     return results.rows;
   }
 

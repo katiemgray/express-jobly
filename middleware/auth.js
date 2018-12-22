@@ -9,9 +9,6 @@ function ensureLoggedIn(req, res, next) {
   try {
     const tokenFromBody = req.body._token;
     const token = jwt.verify(tokenFromBody, SECRET);
-    // if (token !== tokenFromBody) {
-    //   return next({ status: 404 });
-    // }
     return next();
   } catch (err) {
     return next({ status: 401, message: 'Unauthorized' });
@@ -41,7 +38,6 @@ function ensureAdmin(req, res, next) {
   try {
     const tokenFromBody = req.body._token;
     const token = jwt.verify(tokenFromBody, SECRET);
-    console.log(`inside middleware for token.is_admin`, token.is_admin);
     if (token.is_admin === true) {
       return next();
     } else {
